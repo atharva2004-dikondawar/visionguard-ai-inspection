@@ -20,12 +20,6 @@ It enables training on normal images and detecting defects with heatmap visualiz
 
 ---
 
-## System Architecture
-
-![Architecture](architecture.png)
-
----
-
 ## Tech Stack
 
 **AI / Backend**
