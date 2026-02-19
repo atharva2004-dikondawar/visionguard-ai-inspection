@@ -243,3 +243,8 @@ def analytics(object_id: str, user: str = Depends(get_current_user)):
         "defect": defect,
         "defect_rate": defect_rate,
     }
+
+# ---------------------------- ROOT ROUTE ---------------------------
+@app.get("/")
+def root():
+    return {"status": "VisionGuard Backend Running"}
