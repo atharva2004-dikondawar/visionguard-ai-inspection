@@ -52,7 +52,9 @@ def train(object_id: str, files: list[UploadFile] = File(...)):
     
     print("Checking object directory:", obj_dir)
     print("Exists:", os.path.exists(obj_dir))
-    
+    print("TRAIN REQUEST FOR:", object_id)
+    print("DIRECTORY:", obj_dir)
+    print("EXISTS:", os.path.exists(obj_dir))
     if not os.path.exists(obj_dir):
         raise HTTPException(status_code=403, detail="Access denied")
 
