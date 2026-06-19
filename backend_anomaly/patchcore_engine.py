@@ -10,21 +10,39 @@ import torch.nn.functional as F
 from torchvision import models, transforms
 
 # --------------------- Shared backbone ------------------
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = "cpu"
 
-resnet = models.resnet18(weights=models.ResNet18_Weights.DEFAULT).to(DEVICE)
-resnet.eval()
-for p in resnet.parameters():
-    p.requires_grad = False
+resnet = None
+feature_maps = []
+hooks_registered = False
+
+# --------------------- Get ResNet Model ---------------------
+def get_resnet():
+    global resnet
+    global hooks_registered
+
+    if resnet is None:
+        resnet = models.resnet18(
+            weights=models.ResNet18_Weights.DEFAULT
+        ).to(DEVICE)
+
+        resnet.eval()
+
+        for p in resnet.parameters():
+            p.requires_grad = False
+
+        if not hooks_registered:
+            resnet.layer2.register_forward_hook(hook_fn)
+            resnet.layer3.register_forward_hook(hook_fn)
+            hooks_registered = True
+
+    return resnet
 
 # ----------------------- Hooks -------------------------
 feature_maps = []
 
 def hook_fn(_, __, output):
     feature_maps.append(output)
-
-resnet.layer2.register_forward_hook(hook_fn)
-resnet.layer3.register_forward_hook(hook_fn)
 
 # --------------------- Transforms ------------------------
 transform = transforms.Compose([
@@ -41,8 +59,10 @@ def extract_patches(img_tensor):
     global feature_maps
     feature_maps = []
 
+    model = get_resnet()
+
     with torch.no_grad():
-        _ = resnet(img_tensor)
+        _ = model(img_tensor)
 
     fmap1, fmap2 = feature_maps
     fmap2 = F.interpolate(fmap2, size=fmap1.shape[-2:], mode="bilinear")
