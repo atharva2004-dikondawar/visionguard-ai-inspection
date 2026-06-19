@@ -1,5 +1,4 @@
 # ---------------------- Imports ----------------------
-from turtle import st
 
 from database import init_db, save_inspection, get_history
 from fastapi.middleware.cors import CORSMiddleware
