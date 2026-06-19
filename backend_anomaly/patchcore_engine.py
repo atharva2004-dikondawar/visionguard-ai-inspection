@@ -22,6 +22,7 @@ def get_resnet():
     global hooks_registered
 
     if resnet is None:
+        print("Loading ResNet18 model...")
         resnet = models.resnet18(
             weights=models.ResNet18_Weights.DEFAULT
         ).to(DEVICE)

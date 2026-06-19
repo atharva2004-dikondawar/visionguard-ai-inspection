@@ -25,3 +25,6 @@ Thumbs.db
 
 # # frontend
 # inspect-ai-dashboard/
+backend_anomaly/storage/
+__pycache__/
+*.pyc
