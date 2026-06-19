@@ -41,7 +41,7 @@ def create_object(name: str):
     obj_id = str(uuid.uuid4())
     path = f"{BASE_DIR}/{DEFAULT_USER}/{obj_id}"
     os.makedirs(path, exist_ok=True)
-
+    print("Created object directory:", path)
     return {"object_id": obj_id, "owner": DEFAULT_USER}
 
 # ---------------------- Train Object ----------------------
