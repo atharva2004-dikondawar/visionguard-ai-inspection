@@ -1,12 +1,10 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard,
   Box,
   Layers,
   ScanLine,
   History,
-  LogOut,
   Scan,
   ChevronLeft,
   ChevronRight,
@@ -23,7 +21,6 @@ const navItems = [
 ];
 
 const AppLayout = ({ children }: { children: ReactNode }) => {
-  const { logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
 
@@ -70,13 +67,6 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             {!collapsed && <span>Collapse</span>}
-          </button>
-          <button
-            onClick={logout}
-            className="flex items-center gap-3 px-3 py-2 rounded-sm text-sm text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-colors w-full"
-          >
-            <LogOut className="w-4 h-4 shrink-0" />
-            {!collapsed && <span>Logout</span>}
           </button>
         </div>
       </aside>

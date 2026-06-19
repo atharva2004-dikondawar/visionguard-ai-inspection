@@ -1,51 +1,10 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://visionguard-ai-inspection.onrender.com";
+const API_BASE_URL = "http://localhost:8001";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("jwt_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("jwt_token");
-      window.location.href = "/login";
-    }
-    return Promise.reject(error);
-  }
-);
-
-export const authApi = {
-  login: async (username: string, password: string) => {
-    const formData = new URLSearchParams();
-    formData.append("username", username);
-    formData.append("password", password);
-    const response = await api.post("/login", formData, {
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    });
-    return response.data;
-  },
-};
-
-export const registerApi = {
-  register: async (username: string, password: string) => {
-    const response = await api.post("/register", {
-      username,
-      password,
-    });
-    return response.data;
-  },
-};
 
 export const analyticsApi = {
   getAnalytics: async (objectId: string) => {

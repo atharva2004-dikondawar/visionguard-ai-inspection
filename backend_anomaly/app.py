@@ -1,4 +1,6 @@
 # ---------------------- Imports ----------------------
+from turtle import st
+
 from database import init_db, save_inspection, get_history
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,7 +10,6 @@ import faiss
 
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
 from fastapi.responses import StreamingResponse
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
 from patchcore_engine import (
@@ -19,14 +20,7 @@ from patchcore_engine import (
     load_profile
 )
 
-from auth import (
-    users_db,
-    hash_password,
-    verify_password,
-    create_access_token,
-    decode_token
-)
-
+DEFAULT_USER = "admin"
 # ---------------------- App Init ----------------------
 app = FastAPI()
 app.add_middleware(
@@ -42,62 +36,20 @@ init_db()
 BASE_DIR = "storage/objects"
 os.makedirs(BASE_DIR, exist_ok=True)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
-# ---------------------- Auth Dependency ----------------------
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    try:
-        payload = decode_token(token)
-        username = payload.get("sub")
-        if username not in users_db:
-            raise HTTPException(status_code=401)
-        return username
-    except:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-# ---------------------- Register ----------------------
-
-class UserCreate(BaseModel):
-    username: str
-    password: str
-
-@app.post("/register")
-def register(user: UserCreate):
-    if user.username in users_db:
-        raise HTTPException(status_code=400, detail="User exists")
-
-    users_db[user.username] = {
-        "username": user.username,
-        "password": hash_password(user.password)
-    }
-    return {"message": "Registered"}
-
-# ---------------------- Login ----------------------
-@app.post("/login")
-def login(form: OAuth2PasswordRequestForm = Depends()):
-    user = users_db.get(form.username)
-
-    if not user or not verify_password(form.password, user["password"]):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    token = create_access_token({"sub": form.username})
-    return {"access_token": token, "token_type": "bearer"}
-
 # ---------------------- Create Object ----------------------
 @app.post("/objects")
-def create_object(name: str, user: str = Depends(get_current_user)):
+def create_object(name: str):
     obj_id = str(uuid.uuid4())
-    path = f"{BASE_DIR}/{user}/{obj_id}"
+    path = f"{BASE_DIR}/{DEFAULT_USER}/{obj_id}"
     os.makedirs(path, exist_ok=True)
 
-    return {"object_id": obj_id, "owner": user}
+    return {"object_id": obj_id, "owner": DEFAULT_USER}
 
 # ---------------------- Train Object ----------------------
 @app.post("/objects/{object_id}/train")
-def train(object_id: str, files: list[UploadFile] = File(...),
-          user: str = Depends(get_current_user)):
+def train(object_id: str, files: list[UploadFile] = File(...)):
 
-    obj_dir = f"{BASE_DIR}/{user}/{object_id}"
+    obj_dir = f"{BASE_DIR}/{DEFAULT_USER}/{object_id}"
     if not os.path.exists(obj_dir):
         raise HTTPException(status_code=403, detail="Access denied")
 
@@ -116,10 +68,9 @@ def train(object_id: str, files: list[UploadFile] = File(...),
 
 # ---------------------- Inspect (Single + Heatmap) ----------------------
 @app.post("/objects/{object_id}/inspect")
-def inspect(object_id: str, file: UploadFile = File(...),
-            user: str = Depends(get_current_user)):
+def inspect(object_id: str, file: UploadFile = File(...)):
 
-    obj_dir = f"{BASE_DIR}/{user}/{object_id}"
+    obj_dir = f"{BASE_DIR}/{DEFAULT_USER}/{object_id}"
     if not os.path.exists(obj_dir):
         raise HTTPException(status_code=403, detail="Access denied")
 
@@ -136,7 +87,7 @@ def inspect(object_id: str, file: UploadFile = File(...),
     result = "DEFECT" if score > threshold else "NORMAL"
     
     save_inspection(
-    user=user,
+    user=DEFAULT_USER,
     object_id=object_id,
     filename=file.filename,
     score=score,
@@ -158,10 +109,9 @@ def inspect(object_id: str, file: UploadFile = File(...),
 
 # ---------------------- Batch Inspection ----------------------
 @app.post("/objects/{object_id}/inspect-batch")
-def inspect_batch(object_id: str, files: list[UploadFile] = File(...),
-                  user: str = Depends(get_current_user)):
+def inspect_batch(object_id: str, files: list[UploadFile] = File(...)):
 
-    obj_dir = f"{BASE_DIR}/{user}/{object_id}"
+    obj_dir = f"{BASE_DIR}/{DEFAULT_USER}/{object_id}"
     if not os.path.exists(obj_dir):
         raise HTTPException(status_code=403, detail="Access denied")
 
@@ -184,7 +134,7 @@ def inspect_batch(object_id: str, files: list[UploadFile] = File(...),
     for path, score, _ in batch_results:
         result = "DEFECT" if score > threshold else "NORMAL"
         save_inspection(
-            user=user,
+            user=DEFAULT_USER,
             object_id=object_id,
             filename=os.path.basename(path),
             score=score,
@@ -205,8 +155,8 @@ def inspect_batch(object_id: str, files: list[UploadFile] = File(...),
 
 # --------------------------- VIEW HISTORY ---------------------------
 @app.get("/objects/{object_id}/history")
-def history(object_id: str, user: str = Depends(get_current_user)):
-    rows = get_history(user, object_id)
+def history(object_id: str):
+    rows = get_history(DEFAULT_USER, object_id)
 
     data = []
     for r in rows:
@@ -221,8 +171,8 @@ def history(object_id: str, user: str = Depends(get_current_user)):
 
 # --------------------------- ANALYTICS ---------------------------
 @app.get("/objects/{object_id}/analytics")
-def analytics(object_id: str, user: str = Depends(get_current_user)):
-    rows = get_history(user, object_id)
+def analytics(object_id: str):
+    rows = get_history(DEFAULT_USER, object_id)
 
     total = len(rows)
     if total == 0:
