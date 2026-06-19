@@ -49,6 +49,10 @@ def create_object(name: str):
 def train(object_id: str, files: list[UploadFile] = File(...)):
 
     obj_dir = f"{BASE_DIR}/{DEFAULT_USER}/{object_id}"
+    
+    print("Checking object directory:", obj_dir)
+    print("Exists:", os.path.exists(obj_dir))
+    
     if not os.path.exists(obj_dir):
         raise HTTPException(status_code=403, detail="Access denied")
 
