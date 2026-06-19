@@ -199,5 +199,6 @@ def analytics(object_id: str):
 
 # ---------------------------- ROOT ROUTE ---------------------------
 @app.get("/")
+@app.head("/")
 def root():
     return {"status": "VisionGuard Backend Running"}
