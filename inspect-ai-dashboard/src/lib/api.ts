@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8001"; // Replace with your backend API URL
+const API_BASE_URL = "https://visionguard-ai-inspection.onrender.com"; // Replace with your backend API URL
 
 const api = axios.create({
   baseURL: API_BASE_URL,
